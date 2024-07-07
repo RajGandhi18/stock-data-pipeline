@@ -1,0 +1,57 @@
+CREATE TABLE IF NOT EXISTS stock_data.ohlc_data (
+        date DATE,
+        company VARCHAR(50),
+        open FLOAT,
+        close FLOAT,
+        high FLOAT,
+        low FLOAT,
+        volume BIGINT,
+	UNIQUE(date, company)
+    );
+
+
+CREATE INDEX idx_company_date ON stock_data.ohlc_data (company, date);
+CREATE INDEX idx_date ON stock_data.ohlc_data (date);
+CREATE INDEX idx_company ON stock_data.ohlc_data (company);
+
+
+
+1. Company Wise Daily Variation of Prices
+    INDEX Uses -> idx_company_date
+    Query ->
+        with CTE as (
+        select company, date, high, close, open, low, high-low as variation, close-open as price_variation,
+            lag (close, 1) over (partition by company order by date asc) as prev_day_close
+        from stock_data.ohlc_data
+        )
+        select *, close - prev_day_close as close_price_change 
+        from CTE
+        order by company, date;
+
+
+2. Company Wise Daily Volume Change 
+    INDEX Uses -> idx_company_date
+    Query ->
+        with CTE as (
+        SELECT date, company, volume, 
+            lag(volume, 1) over (partition by company order by date asc) as prev_day_volume
+        FROM stock_data.ohlc_data
+        )
+        select *, volume - prev_day_volume as volume_change
+        from CTE
+        ORDER BY company, date;
+
+3. Median Daily Variation
+    INDEX Uses -> idx_company_date
+    Query ->
+        with CTE as (
+        select *, high-low as variation, 
+        ROW_NUMBER() over (partition by company order by (high-low) asc) as rank,
+        COUNT(*) OVER (PARTITION BY Company) AS data_points
+        from stock_data.ohlc_data
+        )
+        select company, avg(variation) as median_variation
+        from CTE
+        where rank in (floor(data_points / 2.0), ceil(data_points/ 2.0) + 1)
+        group by company
+        order by company;
