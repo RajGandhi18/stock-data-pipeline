@@ -13,13 +13,13 @@
         low FLOAT, \
         volume BIGINT, \
 	UNIQUE(date, company) \
-    ); \
+    ); 
 
-    * I have added unique columns so that if in any case the script fails in between, we can run it again without worrying about data duplications
+    * I have added unique columns so that if in any case the script fails in between, we can rerun it without worrying about data duplications
 
 * Backfilling historical data (historical_dump.py)
     * I have created a script named historical_dump.py for migrating data to postgres db on localhost
-    * After getting the API key, I have written a function (get_data) to get data from API and another function (clean_data) to get the required fields, converted the json to dataframe and filtered data from Jan 2020- May 2024
+    * After getting the API key, I wrote a function (get_data) to get data from API and another function (clean_data) to get the required fields, converted the json to dataframe and filtered data from Jan 2020- May 2024
     * After getting all the data I have pushed it to postgres database
 
 * Script for Daily Dump (D-1) (incremental.py)
